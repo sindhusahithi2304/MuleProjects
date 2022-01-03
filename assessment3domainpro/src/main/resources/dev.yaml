@@ -1,0 +1,12 @@
+http:
+ port: '8085'
+
+ 
+db:
+  host: 'muletraining.database.windows.net'
+  port: '1433'
+  user: 'user'
+  dbname: 'BikeStores'
+  password: 'muletraining@123'
+  databasename: 'BikeStores'
+  

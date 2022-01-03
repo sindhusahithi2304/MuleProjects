@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<domain:mule-domain
+        xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties"
+        xmlns:db="http://www.mulesoft.org/schema/mule/db"
+        xmlns:http="http://www.mulesoft.org/schema/mule/http"
+        xmlns="http://www.mulesoft.org/schema/mule/core"
+        xmlns:domain="http://www.mulesoft.org/schema/mule/ee/domain" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xsi:schemaLocation="
+               http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+               http://www.mulesoft.org/schema/mule/ee/domain http://www.mulesoft.org/schema/mule/ee/domain/current/mule-domain-ee.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd">
+	<http:listener-config name="domainHTTP_Listener_config" doc:name="HTTP Listener config" doc:id="1bffc34b-a983-4c8b-847e-2b4547fca278" >
+		<http:listener-connection host="localhost" port="${secure::http.port}" />
+	</http:listener-config>
+	<db:config name="domainDatabase_Config" doc:name="Database Config" doc:id="d7122807-64e8-452c-99bb-15064b11918a" >
+		<db:my-sql-connection host="${secure::db.host}" port="${secure::db.port}" user="${secure::db.user}" password="${secure::db.password}" database="${secure::db.databasename}" />
+	</db:config>
+	<configuration-properties doc:name="Configuration properties" doc:id="6a47b7eb-92d4-469b-8a28-2d6ab4e9fb21" file="dev.yaml" />
+	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="b3bbb581-63f1-4e71-bb88-bbaf1859ea44" file="dev.yaml" key="property.key" >
+		<secure-properties:encrypt algorithm="Blowfish" />
+	</secure-properties:config>
+
+
+    <!-- configure here resource to be shared within the domain -->
+
+</domain:mule-domain>

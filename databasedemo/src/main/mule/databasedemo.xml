@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="5fcfc74c-d6c2-4c03-abaf-13c3cfee454d" >
+		
+		<http:listener-connection host="${secure::http.host}" port="${secure::http.port}" />
+	</http:listener-config>
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="e030140b-2976-4b54-8ddd-852091a89252" >
+		<db:mssql-connection host="${secure::sqldb.host}" port="${secure::sqldb.port}" user="${secure::sqldb.user}" password="${secure::sqldb.password}" databaseName="${secure::sqldb.dbname}" />
+	</db:config>
+	<global-property doc:name="Global Property" doc:id="471f5219-42d0-4dae-9d5f-400203eb6d9d" name="env" value="dev" />
+	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="601d9b84-901f-42b7-8d06-9009e1da0cb5" file="properties\dev.yaml" key="property.key" >
+		<secure-properties:encrypt algorithm="Blowfish" />
+	</secure-properties:config>
+	<flow name="databasedemoFlow" doc:id="7e965964-b950-473f-96b7-e7556fe9133d" initialState="stopped">
+		<http:listener doc:name="Listener" doc:id="201e7cbc-b671-46c8-8570-fdad26d86867" path="/db" config-ref="HTTP_Listener_config"/>
+		<db:select doc:name="Select" doc:id="f8c26285-8fa3-4989-b7eb-df2343b73897" config-ref="Database_Config">
+			<db:sql ><![CDATA[select * from SalesLT.Product where Color = :'Black']]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	Black: attributes.queryParams.Color
+}]]]></db:input-parameters>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="17226dcd-d2d5-440b-88f8-07454922fa8e">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="ad48f70d-4566-4f5c-b33e-2e0c164a5caf" message="#[payload]"/>
+	</flow>
+	<flow name="databasedemoFlow2" doc:id="8184b776-9295-4df6-b4fa-66bcf70cae98" initialState="started">
+		<http:listener doc:name="Listener" doc:id="ca3d9448-75b5-4d1b-a4a6-ad7ec8f172d3" config-ref="HTTP_Listener_config" path="${secure::http.path}" />
+		<db:insert doc:name="Insert" doc:id="0265d8b4-ca27-4d29-bcd4-fe8782a23af1" config-ref="Database_Config">
+			<db:sql ><![CDATA[insert into production.brands(brand_name) values ('Chep'),('Nike')]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	Chep: attributes.queryParams.brandname,
+	Nike: attributes.queryParams.brandname
+}]]]></db:input-parameters>
+		</db:insert>
+		<ee:transform doc:name="Transform Message" doc:id="ebd38c77-1f81-4922-9aa2-622092c232de" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="fa4f1230-2859-4356-b750-be4a28aa7fa8" message="#[payload]" />
+	</flow>
+	<flow name="databasedemoFlow1" doc:id="5ed604cf-3334-4568-bbcf-67bfb750f1b4" initialState="stopped">
+		<db:listener doc:name="On Table Row" doc:id="9aec7f8e-d4ef-4b90-914c-0d31f7ffd0c7" config-ref="Database_Config" table="production.categories" watermarkColumn="category_id">
+			<scheduling-strategy >
+				<fixed-frequency frequency="10" timeUnit="SECONDS"/>
+			</scheduling-strategy>
+		</db:listener>
+		<logger level="INFO" doc:name="Logger" doc:id="c354d584-671e-4f27-9ceb-c32978744e8e" message="#[payload]"/>
+	</flow>
+</mule>

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:java="http://www.mulesoft.org/schema/mule/java" xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/java http://www.mulesoft.org/schema/mule/java/current/mule-java.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="cad0022e-1401-4a4b-9e46-00879f636a4b" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<file:config name="File_Config" doc:name="File Config" doc:id="48560c29-878b-4ffa-b3a0-6abce5349f6f" >
+		<file:connection workingDir="C:\Users\sindhuk\Desktop" />
+	</file:config>
+	<flow name="assessment-3Flow" doc:id="13e3583c-408a-4e63-a7ca-1919e601521d" >
+		<http:listener doc:name="Listener" doc:id="558ee048-8e57-4540-9f66-50e80a242b5e" path="/ass3" config-ref="HTTP_Listener_config"/>
+		<set-variable value="#[uuid()]" doc:name="corelationId" doc:id="822ef4f1-85d0-473f-80fb-8423384ea191" variableName="corelationId"/>
+		<logger level="INFO" doc:name="infoLogRequest" doc:id="447db5fe-8a84-45f5-bfa4-b0f715d5f4fd" message="corelationId-#[vars.corelationId]"/>
+		<choice doc:name="Choice" doc:id="6f7ca911-12ec-4faa-bdcf-305825a4a1ac" >
+			<when expression="#[isEven(attributes.queryParams.number)]">
+				<ee:transform doc:name="checkPayloadEven/Odd" doc:id="d4dd127a-a03b-41b3-a810-20f365ae2cd0" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+var test=[1,2,3,4,5,6,7,8,9,10]
+var a= attributes.queryParams.number as Number
+---
+test map ((item, index) -> a * item )]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<file:write doc:name="result-of-number.txt" doc:id="fa825f6c-184e-4c53-9af8-f0109a7d53d5" config-ref="File_Config" path="C:\Users\sindhuk\Desktop\Desktop\result-of-number.txt" mode="CREATE_NEW"/>
+			</when>
+			<otherwise >
+				<java:new doc:name="message()" doc:id="00426c36-297b-4ada-a3ad-5d62b44330a6" class="mulejavademo.message" constructor="message()" target="test"/>
+				<java:invoke-static doc:name="Invoke static" doc:id="b6a30b7c-8d78-4ea5-b20d-7bca1206aa4a" class="mulejavademo.message" method="getMessage()"/>
+				<logger level="INFO" doc:name="infoLogRequest" doc:id="c9ca2ccb-4814-4c7f-94c2-3f8c70a06412" message="#[payload]"/>
+			</otherwise>
+		</choice>
+	</flow>
+</mule>

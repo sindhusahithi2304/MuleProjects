@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:java="http://www.mulesoft.org/schema/mule/java"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/java http://www.mulesoft.org/schema/mule/java/current/mule-java.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="2f526eaf-280d-4ef8-97b7-5085741e1949" >
+		
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<flow name="assessment-2Flow" doc:id="a98e916e-e4d6-4476-817f-840939be8790" >
+		<http:listener doc:name="Listener" doc:id="31efef9c-9296-40b6-b156-b9a320fd2f9d" path="/flow1" config-ref="HTTP_Listener_config"/>
+		<set-variable value="#[uuid()]" doc:name="Set Variable" doc:id="6a358d4a-52e6-4e26-931b-f614939c245b" variableName="corelationId"/>
+		<logger level="INFO" doc:name="Logger" doc:id="2cfef41b-ffd1-43e9-8bfa-d37284ae6484" message="corelationId -- #[vars.corelationId]"/>
+		<choice doc:name="Choice" doc:id="8ca028be-3193-4587-9e85-56008d5fb4e9" >
+			<when expression='#[((attributes.queryParams.productId &gt;= 10001 as Number) and (attributes.queryParams.productId &lt;=99999 as Number))]'>
+				<java:new constructor="Sales()" doc:name="New" doc:id="fbe55a98-d084-43c1-8344-22253df3f808" target="payload1" class="sample.Sales" />
+				<java:invoke doc:name="Invoke" doc:id="a422666b-5d66-4bfe-b83f-491bbd25fa97" instance="#[vars.payload1]" class="sample.Sales" method="getcheckProductId(int)">
+					<java:args ><![CDATA[#[{
+	arg0: attributes.queryParams.productId
+	
+}]]]></java:args>
+				</java:invoke>
+				<set-payload value="Valid Id" doc:name="Set Payload" doc:id="eafb9b9f-5d7f-4fd9-a47c-a7872f1d6ca7" />
+			</when>
+			<otherwise >
+				<set-payload value="Product Id is Invalid" doc:name="Set Payload" doc:id="bbac8e9b-8269-4430-8c79-aa27c32e37f3" />
+				<logger level="INFO" doc:name="Logger" doc:id="27435a44-8fef-4587-a2e2-8313601cf63d" message="#[payload]"/>
+			</otherwise>
+		</choice>
+	</flow>
+	<flow name="assessment-2Flow1" doc:id="03d089cb-e002-43cc-87fa-a667066e299f" >
+		<http:listener doc:name="Listener" doc:id="9450dfd7-59cb-431c-8cfb-b4a1889177eb" config-ref="HTTP_Listener_config" path="/flow2"/>
+		<set-variable value="#[uuid()]" doc:name="Set Variable" doc:id="1cf1a9c1-e3d8-48e4-a51c-e48b4a6a6e1b" variableName="corelationId" />
+		<logger level="INFO" doc:name="Logger" doc:id="450896ee-7959-4ae8-9151-aa1558d85688" message="corelationId -- #[vars.corelationId]" />
+		<java:new constructor="Sales()" doc:name="New" doc:id="1461c204-eb8a-4ef3-a897-e79014dd3587" class="sample.Sales" target="payload2" />
+		<java:invoke method="getAmount(java.lang.String)" doc:name="Invoke" doc:id="de027741-5ee0-4cd1-9546-c2c565550c78" instance="#[vars.payload2]" class="sample.Sales">
+			<java:args><![CDATA[#[{
+	"arg0":payload.size
+}]]]></java:args>
+		</java:invoke>
+		<ee:transform doc:name="Transform Message" doc:id="1cd0a7a0-fe31-4b16-9d2e-6c523a153b2f" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+"Total amount": payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="84926e71-60c7-4cde-bd6f-4fccbd87db2e" message="#[payload]"/>
+	</flow>
+</mule>

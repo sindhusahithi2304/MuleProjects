@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="8298b9db-af50-4d36-b709-a74256d7814c" >
+		<http:listener-connection host="0.0.0.0" port="8086" />
+	</http:listener-config>
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="e273dfa5-bf15-453b-a577-68ceab1e929a" >
+		<db:my-sql-connection host="localhost" port="3306" user="root" password="root" database="test" />
+	</db:config>
+	<flow name="dbdemoFlow" doc:id="ee63ec08-433c-4af0-9d0c-c9ceb849cbde" >
+		<http:listener doc:name="Listener" doc:id="383fc0f0-d1c9-426b-9f4d-b90112348951" config-ref="HTTP_Listener_config" path="/db"/>
+		<db:select doc:name="Select" doc:id="6ff9e97a-c50f-4ca6-a564-de946e6a786c" config-ref="Database_Config">
+			<db:sql ><![CDATA[select * from test.employee where Employeeid =:id ]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	id: attributes.queryParams.id
+}]]]></db:input-parameters>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="d44974ba-885a-4a4b-b9df-dd85c71edfc7" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="2c5c7e1b-96e4-47d9-b265-0246afb519b3" message="#[payload]"/>
+	</flow>
+	<flow name="dbdemoFlow1" doc:id="e83dea9b-f751-4186-850d-6cbbc7b0899e" >
+		<http:listener doc:name="Listener" doc:id="1b5b45f0-c84c-4aa5-93ad-146d9f6cb6de" config-ref="HTTP_Listener_config" path="/insert"/>
+		<db:insert doc:name="InsertingData-into-test.employee" doc:id="93cc527e-08ae-4f5f-a480-79dec01bb3da" config-ref="Database_Config">
+			<db:sql ><![CDATA[INSERT INTO `test`.`employee`
+(`Employeeid`,
+`Employeename`,
+`Employeesalary`,
+`Employeeage`,
+`Employeeloc`)
+VALUES
+(123,"sindhu",25000,25,"Hyd"),
+(345,"Ram",30000,26,"Pune"),
+(456,"Jhon",35000,27,"Chennai"),
+(678,"sahithi",40000,28,"Mumbai"),
+(891,"sid",45000,29,"Delhi");]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	Employeeid: attributes.queryParams.Employeeid,
+	Employeename: attributes.queryParams.Employeename,
+	Employeesalary:attributes.queryParams.Employeesalary,
+	Employeeage:attributes.queryParams.Employeeage,
+	Employeeloc:attributes.queryParams.Employeeloc
+}]]]></db:input-parameters>
+		</db:insert>
+		<ee:transform doc:name="Transform Message" doc:id="9c207e4e-b182-4bc4-a626-49bc7cc89aa8" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="dbdemoFlow2" doc:id="91fa605f-12f9-4cd4-bfb2-c8b75f5f37e2" >
+		<http:listener doc:name="Listener" doc:id="f2102571-a1b8-41cd-995f-1770d3f3102a" config-ref="HTTP_Listener_config" path="/choice"/>
+		<db:select doc:name="Select" doc:id="bd0e8a26-f306-4d8c-8ef7-216a45743b15" config-ref="Database_Config">
+			<db:sql><![CDATA[select * from test.employee where Employeename =:name]]></db:sql>
+			<db:input-parameters><![CDATA[#[{
+	name: attributes.queryParams.name
+}]]]></db:input-parameters>
+		</db:select>
+		<choice doc:name="Choice" doc:id="6ea4abd2-3367-4639-a96c-aaf3c134c946" >
+			<when expression="#[isEmpty(payload)]">
+				<ee:transform doc:name="Transform Message" doc:id="a32a89b2-a0fb-43af-bf30-d7c4afe75723" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+"message": "No data found"]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise >
+				<ee:transform doc:name="Transform Message" doc:id="c668c973-b8d6-4cf7-9bd8-6c4d82f8de39" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+		<logger level="INFO" doc:name="Logger" doc:id="160859c3-5c9d-4767-afce-fda62352e5e8" message="#[payload]"/>
+	</flow>
+	<flow name="dbdemoFlow3" doc:id="71a355a3-19f0-4fbc-a972-26ebb20e3541" >
+		<http:listener doc:name="Listener" doc:id="9008d2d6-b0b0-4e5c-b63c-ab1d50c651fb" config-ref="HTTP_Listener_config" path="/select"/>
+		<db:select doc:name="details.customer" doc:id="53fb4f56-84a2-428e-85b3-713b3248b3af" config-ref="Database_Config">
+			<db:sql ><![CDATA[select * from details.customer]]></db:sql>
+		</db:select>
+		<ee:transform doc:name="customerDetails" doc:id="57fd6f9b-e65d-4331-a929-95cd574f60b3" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="infoLogRequest" doc:id="6050da4e-1b6d-41ad-be49-46df28f3a945" message="#[payload]"/>
+	</flow>
+	<flow name="dbdemoFlow4" doc:id="b0f7e2ba-dd80-49ec-8d77-0210e864ecd7" >
+		<http:listener doc:name="Listener" doc:id="6785bb20-2dfb-4830-870c-f93d14fab51a" config-ref="HTTP_Listener_config" path="/inserting" />
+		<db:insert doc:name="InsertingData-into-details.customer" doc:id="773e5c30-dd41-4793-9b20-2643cdc659f8" config-ref="Database_Config">
+			<db:sql ><![CDATA[INSERT INTO `details`.`customer`
+(`customerid`,
+`customername`,
+`customerdob`,
+`city`,
+`gender`)
+VALUES
+(455,"sahithi",14-12-96,"Hyd","F"),
+(675,"phani",23-12-96,"Chennai","M");
+
+]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	customerid: attributes.queryParams.customerid,
+	customername: attributes.queryParams.customername,
+	customerdob:attributes.queryParams.customerdob,
+	city:attributes.queryParams.city,
+	gender:attributes.queryParams.gender
+}]]]></db:input-parameters>
+		</db:insert>
+		<ee:transform doc:name="customerDetails" doc:id="1c99e93c-fb3d-432b-a52c-954c2093bdea" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="infoLogRequest" doc:id="72d75459-1033-416f-8da4-2ec8fdc56342" message="#[payload]" />
+	</flow>
+</mule>

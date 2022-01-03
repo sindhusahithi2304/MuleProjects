@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<error-handler name="globalerrorhandling" doc:id="f80abdb1-87ea-4010-9922-5d6f408718ba" >
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="7995aeb3-aaf1-412b-8d85-c26f652f75c7" type="VALIDATION:INVALID_NUMBER" >
+			<ee:transform doc:name="message" doc:id="b3a4ebbf-27c5-4fcd-9b98-8f06b1f28d6c" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+"message": "global error has handled"]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<logger level="INFO" doc:name="infoLogrequest" doc:id="aee25068-8061-42a3-b796-22982ba3d6bf" message="#[payload]" />
+		</on-error-propagate>
+	</error-handler>
+</mule>

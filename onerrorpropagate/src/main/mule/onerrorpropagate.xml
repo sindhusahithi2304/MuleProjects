@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="c725ac2a-5edf-41dd-a022-9b03ea358d7e" >
+		<http:listener-connection host="0.0.0.0" port="8087" />
+	</http:listener-config>
+	<flow name="onerrorPropagateFlow" doc:id="9cf59b0a-c0c2-45a9-9f92-3a5db82c3fb5" >
+		<http:listener doc:name="Listener" doc:id="181228a2-45c2-4492-b532-2587b2af741f" config-ref="HTTP_Listener_config" path="/propogate" >
+			<http:error-response >
+				<http:body ><![CDATA[#[payload]]]></http:body>
+			</http:error-response>
+		</http:listener>
+		<set-payload value='#["payload after flow reference"]' doc:name="flowReferencePayload" doc:id="62e671af-e134-4870-8403-429cc6266728" />
+		<flow-ref doc:name="onerror-propogateFlowReference" doc:id="a9117fa5-70f1-42a2-80df-15fdb9fa9b0b" name="onerror-propogate" />
+		<logger level="INFO" doc:name="infoLogRequest" doc:id="a5a24a69-b243-4fec-b567-67f8a7145fff" message="#[payload]" />
+	</flow>
+	<flow name="onerror-propogate" doc:id="5c6b4b72-2060-4ef4-8240-bdb3e37b9730" >
+		<http:request method="GET" doc:name="urlConfiguration" doc:id="bc9b615e-1db6-44d6-9986-a50ceafa45dd" url="qhhzhhhs.l," />
+		<set-payload value='#["after error handling in custom handler"]' doc:name="message-To-Propoagate-the-Flow" doc:id="64fb7af8-436d-4301-8ace-c6648c1f795e" />
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error propogate" doc:id="c4f38843-2148-4834-a23e-a0939b86d4f5" type="HTTP:CONNECTIVITY" >
+				<set-payload value='#["Response has not initiated"]' doc:name="errorResonse" doc:id="7c7838d2-d114-4c49-ba98-13275733af2e" />
+				<ee:transform doc:name="error.description" doc:id="c9ea1290-9292-49a9-9ebe-749163c2a352" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+error.description
+
+
+	
+	
+]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-continue>
+		</error-handler>
+	</flow>
+</mule>

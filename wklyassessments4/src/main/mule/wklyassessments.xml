@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="4fea60e2-4023-4602-8b48-2f81706c351f" >
+		<http:listener-connection host="0.0.0.0" port="8084" />
+	</http:listener-config>
+	<configuration doc:name="Configuration" doc:id="79930292-d1d8-4ffd-87a0-a8a79b922078" defaultErrorHandler-ref="globalerror" />
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="2dcace8b-21e6-4bf1-9399-a73a07d8c040" >
+		<http:request-connection host="localhost" />
+	</http:request-config>
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="7bc2deaa-3b39-438c-b9b0-4cb25c33462c" >
+		<db:my-sql-connection host="localhost" port="3306" user="root" password="root" database="demo" />
+	</db:config>
+	<flow name="globalerrorhandling" doc:id="88989cdc-56ec-4d1d-bd5f-821ed0b32f86" >
+		<http:listener doc:name="Listener" doc:id="a57bffc7-87e5-42d6-9492-d9befd95bc2d" config-ref="HTTP_Listener_config" path="/raiseerror">
+			<http:error-response >
+				<http:body ><![CDATA[#[payload]]]></http:body>
+			</http:error-response>
+		</http:listener>
+		<choice doc:name="Choice" doc:id="82a64199-3e9a-4c1a-8605-5be935e5aca8" >
+			<when expression="#[isEmpty(payload)]">
+				<raise-error doc:name="Raise error" doc:id="4890087e-c2f1-49d6-a8ea-c2237f6741db" type="NO:PAYLOAD"/>
+			</when>
+			<otherwise >
+				<ee:transform doc:name="payloadResponse" doc:id="485a6589-d392-41b0-82cf-49783b8e4567" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+
+"response": payload]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+	</flow>
+	<error-handler name="globalerror" doc:id="aa0b97be-c551-4a7a-a4a3-34f5374c3394" >
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="a77b1852-d999-43f4-88f5-26d9037a0671" type="NO:PAYLOAD">
+			<ee:transform doc:name="Transform Message" doc:id="824d65a5-006a-432f-a16a-086fb2ec2d67" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+"message": "global error has handled"]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<logger level="INFO" doc:name="Logger" doc:id="8adca53c-74a6-45d0-8753-785d50add615" message="#[payload]"/>
+		</on-error-propagate>
+	</error-handler>
+	<flow name="parentFlow" doc:id="ca090717-fed9-4e9e-92bc-f72807054bc7" >
+		<http:listener doc:name="/errorcont" doc:id="d9b7c414-28f2-4b31-aa41-4ae04b4f27de" config-ref="HTTP_Listener_config" path="/errorcont" />
+		<set-payload value='#["payload after flow reference"]' doc:name="payloadAfterFlowRef" doc:id="12844e6c-12d2-43e5-9771-c7c72eaea854" />
+		<flow-ref doc:name="subFlow" doc:id="c0765200-9e7b-47d1-a28c-80bf47920b55" name="Sub_Flow" />
+		<logger level="INFO" doc:name="infoLogRequest" doc:id="e6ebefa0-e9a9-4c54-a204-90d76288b5de" message="#[payload]" />
+	</flow>
+	<sub-flow name="Sub_Flow" doc:id="4a56636e-b2dc-4027-9c78-caaaee80d253" >
+		<try doc:name="Try" doc:id="49943681-ac38-4702-ad3b-11510f3b4f4c" >
+			<http:request method="GET" doc:name="URLConfiguration" doc:id="ef773335-df93-48c4-b196-19356088b559" config-ref="HTTP_Request_configuration" url="abgsdsdd.." />
+			<error-handler>
+				<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="15e82edf-663a-4bb2-82ee-6f271bbf61ea" type="HTTP:CONNECTIVITY">
+					<ee:transform doc:name="message" doc:id="f3dcfebd-d830-497d-b53c-cbff6531868e" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+"message": "Error handled in try block"]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+				</on-error-continue>
+			</error-handler>
+		</try>
+	</sub-flow>
+	<flow name="DBSelect" doc:id="896f8444-32cc-4f1b-b24d-d64f00f381d0" >
+		<http:listener doc:name="Listener" doc:id="d46e683c-f843-45eb-b76d-6ca168d43d0c" config-ref="HTTP_Listener_config" path="/select"/>
+		<db:select doc:name="AccountHolders" doc:id="f7338231-fb75-4cb0-a066-4d872597f6bb" config-ref="Database_Config">
+			<db:sql ><![CDATA[select * from demo.accountholders]]></db:sql>
+		</db:select>
+		<ee:transform doc:name="convertingPayload-To-json" doc:id="8f7c572b-1c5d-40c1-9450-302de8c4041a" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="infoLogRequest" doc:id="213fbec5-df9c-4226-8fec-d03f6bdbf0d6" message="#[payload]"/>
+	</flow>
+	<flow name="DBinsert" doc:id="7c31c776-3f29-4eeb-806e-10436d5a7ac9" >
+		<http:listener doc:name="/insert" doc:id="c0688cfa-02d6-46b1-b9ee-2adf998651c5" config-ref="HTTP_Listener_config" path="/insert" />
+		<db:insert doc:name="insertingAccountData" doc:id="5d71d518-4d43-4b75-8ca8-1a868756012f" config-ref="Database_Config">
+			<db:sql ><![CDATA[INSERT INTO `demo`.`accountholders`
+(Id,Name,Accountnum,Mobile,Address)
+VALUES
+(667,"Vicky",6444555,89976,"pqr");]]></db:sql>
+		</db:insert>
+		<ee:transform doc:name="Payload-To-json" doc:id="f5ff9624-864c-43b2-b291-95590cad6fe7" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="infoLogRequest" doc:id="aa217ae1-226c-4435-a7ea-e33a2c8f60b5" message="#[payload]" />
+	</flow>
+</mule>

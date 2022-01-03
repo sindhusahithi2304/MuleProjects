@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="c5d228d2-f537-4363-888c-8d3ed6544c09" >
+		<http:listener-connection host="0.0.0.0" port="8086" />
+	</http:listener-config>
+	<flow name="dwldemo1Flow" doc:id="8cf0044f-a4c1-4ca1-aff8-5cf75f778cb4" >
+		<http:listener doc:name="Listener" doc:id="99be7772-429b-4b9b-8ea1-f32219c4e70f" config-ref="HTTP_Listener_config" path="/dwl"/>
+		<set-payload value="#[1 as Number]" doc:name="Set Payload" doc:id="e1c04041-806f-4177-945c-8f3f1b358c91" />
+		<choice doc:name="Choice" doc:id="98b67ec9-f0dd-428c-a3e6-9654988ff7f2" >
+			<when expression="#[isEven(payload)]">
+				<ee:transform doc:name="Transform Message" doc:id="9b0c9da4-d668-471c-820a-966cd0b07d3a" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"Number": "It is even"
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise >
+				<set-payload value="number is odd" doc:name="Set Payload" doc:id="5ce08dc7-3b9f-4ae1-88c5-973999b1e278" />
+				<logger level="INFO" doc:name="Logger" doc:id="85326589-2be9-42df-a70e-2f6a53491791" message="#[payload]"/>
+			</otherwise>
+		</choice>
+	</flow>
+	<flow name="dwldemo1Flow1" doc:id="9a20af21-b997-49bd-9f96-4b454cf90b8a" >
+		<http:listener doc:name="Listener" doc:id="b6c8ed9c-78f3-4a3a-b5ab-4a23d0f89c8a" config-ref="HTTP_Listener_config" path="/dwl2"/>
+		<set-variable value="#[uuid()]" doc:name="corelationId" doc:id="feec63f4-19ef-4bb3-8b61-6c0a4d81c763" variableName="corelationId"/>
+		<logger level="INFO" doc:name="infoLogRequest" doc:id="ac3c7de9-032f-45d5-b89d-2215e8722d41" message="corelationId --#[vars.corelationId]"/>
+		<set-variable doc:name="abc" doc:id="4ee38b02-53dd-4920-a696-7088dfa3b626" variableName="abc" value="#[attributes.queryParams.abc]"/>
+		<ee:transform doc:name="replaceString" doc:id="af8f983b-5434-474b-b625-92baa76a16b8" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"replace name": attributes.queryParams.abc replace 'name' with "123"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="infoLogRequest" doc:id="29ea4567-5022-424d-bc4f-b7b04b372175" message="#[payload]"/>
+	</flow>
+</mule>

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="7fc267d7-10f3-4e5e-acc7-116434ba5937" >
+		<http:listener-connection host="0.0.0.0" port="8082" />
+	</http:listener-config>
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="8d17b1a6-f211-41b1-850f-84a62333c7ee" >
+		<db:mssql-connection host="muletraining.database.windows.net" port="1433" user="user" password="muletraining@123" databaseName="BikeStores" />
+	</db:config>
+	<flow name="dompro-1Flow" doc:id="b37207f4-949c-4711-90f2-4d013fc7d3dd" >
+		<http:listener doc:name="Listener" doc:id="9c404e0f-e8f6-452b-a1e5-26b008984eab" path="/pro1" config-ref="HTTP_Listener_config"/>
+		<db:insert doc:name="Insert" doc:id="0f771c23-11c4-4a61-831d-3c4eed8bf8da" config-ref="Database_Config">
+			<db:sql ><![CDATA[insert into production.brands(brand_name) values ('Cart')]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	Cart: attributes.queryParams.brandname
+	
+}]]]></db:input-parameters>
+		</db:insert>
+	</flow>
+</mule>

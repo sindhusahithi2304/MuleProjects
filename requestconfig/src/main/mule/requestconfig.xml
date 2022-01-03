@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:wsc="http://www.mulesoft.org/schema/mule/wsc" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/wsc http://www.mulesoft.org/schema/mule/wsc/current/mule-wsc.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="3a866454-9e11-4612-9cbc-63f3ea266119" >
+		<http:listener-connection host="0.0.0.0" port="8082" />
+	</http:listener-config>
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="884eae6d-81be-4fb8-9a9d-3fb914e3c7bd" >
+		<http:request-connection host="assessment1-sindhusahithi.us-e2.cloudhub.io" port="80" />
+	</http:request-config>
+	<wsc:config name="Web_Service_Consumer_Config" doc:name="Web Service Consumer Config" doc:id="59750350-e157-4fa8-85b1-9833599150ad" >
+		<wsc:connection wsdlLocation="http://www.dneonline.com/calculator.asmx?wsdl" service="Calculator" port="CalculatorSoap12" address="http://www.dneonline.com/calculator.asmx">
+			<wsc:web-service-security actor="http://schemas.xmlsoap.org/soap/actor/next" />
+		</wsc:connection>
+	</wsc:config>
+	<flow name="requestconfigFlow" doc:id="4e3c2b13-cf66-48d8-9010-ac195d2a13ce" >
+		<http:listener doc:name="Listener" doc:id="5a710f5a-dede-4c85-b3a3-a39e34ca7fd6" config-ref="HTTP_Listener_config" path="/request"/>
+		<set-variable value="#[uuid()]" doc:name="Set Variable" doc:id="fbdca986-56c5-42fc-ba0c-c17f0af73a24" variableName="corelationId"/>
+		<logger level="INFO" doc:name="Logger" doc:id="6c22ed78-8ac4-4490-8b4f-f17d6fde2d64" message="corelationId-#[vars.corelationId]"/>
+		<ee:transform doc:name="Transform Message" doc:id="caa8001e-e133-4286-93be-23f1ca9bc072" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"empId": 123,
+	"empName": "sahithi",
+	"empSalary": 25000
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="a88caa60-90cd-46b2-bb33-2c61a2e2eea4" message="#[payload]"/>
+		<http:request method="POST" doc:name="Request" doc:id="1ca1bca1-c850-459a-ae7a-c0727a8d1757" config-ref="HTTP_Request_configuration" path="/demo" outputMimeType="application/json">
+		</http:request>
+		<logger level="INFO" doc:name="Logger" doc:id="3bbd29a9-66be-4856-9297-fa08f1cb7e82" message="corelationId-#[vars.corelationId] -#[payload]"/>
+	</flow>
+	<flow name="requestconfigFlow1" doc:id="0d0d6847-0263-4dbc-8cab-c2ffcc460628" >
+		<http:listener doc:name="Listener" doc:id="af655924-3dd4-4b4d-af35-404350f90750" config-ref="HTTP_Listener_config" path="/soap"/>
+		<ee:transform doc:name="Transform Message" doc:id="699ddaa4-205e-4ea1-bdcb-d244fe503f84">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/xml
+ns ns0 http://soap.training.mulesoft.com/
+---
+{
+	ns0#Add: {
+		ns0#intA: payload.value1,
+		ns0#intB: payload.value2
+	}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<wsc:consume doc:name="Consume" doc:id="7bb84671-1be7-4752-a43e-6edfc69206ea" config-ref="Web_Service_Consumer_Config" operation="Add"/>
+		<logger level="INFO" doc:name="Logger" doc:id="884206e5-d749-4536-8c36-ac37c71637a9" message="#[payload]"/>
+	</flow>
+</mule>

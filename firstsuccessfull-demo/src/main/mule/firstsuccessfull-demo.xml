@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="f541969b-5c48-482f-96d7-726a7bd62891" >
+		<http:listener-connection host="0.0.0.0" port="8085" />
+	</http:listener-config>
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="27689ef9-e0bb-40a6-af45-b483db0643ca" >
+		<http:request-connection host="assessment-2-papi.us-e2.cloudhub.io" port="80" />
+	</http:request-config>
+	<flow name="firstsuccessfull-demoFlow" doc:id="fefb16d7-045c-4a47-9475-bea663ca22c4" >
+		<http:listener doc:name="Listener" doc:id="61e8f262-4e0d-4c75-bc40-b204b7938740" path="/first" config-ref="HTTP_Listener_config"/>
+		<set-variable value="#[uuid()]" doc:name="Set Variable" doc:id="704464bb-0dfa-4436-8236-d56ad1c4eb57" variableName="corelationId"/>
+		<logger level="INFO" doc:name="Logger" doc:id="19dac4bb-bf59-4aa3-888e-57222bbdf4d7" message="corelationId-- #[vars.corelationId]"/>
+		<ee:transform doc:name="Transform Message" doc:id="02aed3b4-01e3-4ca6-aeca-8c206d2d3954" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"Message": "Hii"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<first-successful doc:name="First Successful" doc:id="bd336c77-91e3-411a-8f62-60856710cd3a" >
+			<route >
+				<raise-error doc:name="Raise error" doc:id="e62a4230-de72-4344-b0d2-9f07d8d80631" type="ANY"/>
+				<logger level="INFO" doc:name="Logger" doc:id="32187fee-585c-4b7c-94a5-00021db2ebfd" message="route1"/>
+			</route>
+			<route >
+				<logger level="INFO" doc:name="Logger" doc:id="0a6cb278-28d4-4606-864d-3d269c6c9804" message="route1" />
+			</route>
+		</first-successful>
+		<logger level="INFO" doc:name="Logger" doc:id="9c280fef-dbd5-4616-9737-7d4bcfd55b99" message="endlogger"/>
+	</flow>
+	<flow name="firstsuccessfull-demoFlow1" doc:id="b49ae234-05b8-44fb-8b22-a651ab3177cd" >
+		<http:listener doc:name="Listener" doc:id="f6dbd461-24e6-4604-8950-5955866a4983" config-ref="HTTP_Listener_config" path="/until"/>
+		<ee:transform doc:name="Transform Message" doc:id="425560d0-28ec-47ca-a03a-5991879af8b0" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"message": "Hii"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<until-successful maxRetries="3" doc:name="Until Successful" doc:id="4ddbd6c2-a975-4385-831a-764da2d77c64" millisBetweenRetries="1000">
+			<http:request method="POST" doc:name="Request" doc:id="3a271114-1e41-4f69-b193-f74259217e52" config-ref="HTTP_Request_configuration" path="/flow2"/>
+		</until-successful>
+		<logger level="INFO" doc:name="Logger" doc:id="fa29c768-d429-47ae-a32b-37607c2a8c78" message="#[payload]"/>
+	</flow>
+</mule>

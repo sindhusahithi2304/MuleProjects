@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="86fa42ff-db8c-4e1b-b4f1-11ba0629c0ae" >
+		<http:listener-connection host="0.0.0.0" port="8085" />
+	</http:listener-config>
+	<file:config name="File_Config" doc:name="File Config" doc:id="6feef505-81ac-422d-8724-2edd4c2993a1" >
+		<file:connection workingDir="C:\Users\sindhuk\Desktop\Training files" />
+	</file:config>
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="ad4b39da-cc5a-4d19-8c6f-c4cab2054267" >
+		<db:my-sql-connection host="muletraining.database.windows.net" port="1433" user="user" password="muletraining@123" database="BikeStores" />
+	</db:config>
+	<flow name="scattergatherdemoFlow" doc:id="8198c0bc-9d52-4c5a-a999-08f1b9cf73d5" >
+		<http:listener doc:name="Listener" doc:id="4c623764-d36f-4425-928d-be79bfedfe5b" config-ref="HTTP_Listener_config" path="/scatter"/>
+		<set-payload value="#['abc']" doc:name="originalPayload" doc:id="c847cf8d-9ef2-4233-b85a-ef8893828db1" />
+		<scatter-gather doc:name="Scatter-Gather" doc:id="f17427e5-7c5b-4894-88a9-798218902ad5" >
+			<route >
+				<set-variable value="#[payload ++ &quot; &quot;++ 'route1']" doc:name="route1" doc:id="ff2e7553-814c-4a88-a278-bc00bb126e64" variableName="route1"/>
+				<set-payload value="#[payload ++ &quot; &quot;++ 'route1']" doc:name="r1" doc:id="5aabf23b-6e1c-4a1c-ad1b-5be1aef33911" />
+				<logger level="INFO" doc:name="infoLogRequest" doc:id="bb5614f6-fe46-4d58-97cf-3df5ee74682e" message="#[payload]"/>
+			</route>
+			<route >
+				<set-variable value="#[payload ++ &quot; &quot;++ 'route2']" doc:name="route2" doc:id="e61d313e-d549-4953-8396-ce38d6cc35ec" variableName="route2"/>
+				<set-payload value="#[payload ++ &quot; &quot;++ 'route2']" doc:name="r2" doc:id="28b2735b-f636-4121-ab55-3f4708e43d68" />
+				<logger level="INFO" doc:name="infoLogRequest" doc:id="bbdc5a20-cabe-44d0-a1e9-294a3d9a235d" message="#[payload]"/>
+			</route>
+			<route >
+				<set-variable value="#[payload ++ &quot; &quot;++ 'route3']" doc:name="route3" doc:id="a16d146b-8ef5-4b2f-9fe6-280cb01b68ec" variableName="route3"/>
+				<set-payload value="#[payload ++ &quot; &quot;++ 'route3']" doc:name="r3" doc:id="153910d4-3c20-4133-9949-3a2ae2fc45e4" />
+				<logger level="INFO" doc:name="infoLogRequest" doc:id="73325321-21d1-4a2e-8a38-f137f9963328" message="#[payload]"/>
+			</route>
+		</scatter-gather>
+		<ee:transform doc:name="payload" doc:id="3b36eb73-6fd3-45eb-b67b-b2f77ca2c35a" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<set-payload value="#[%dw 2.0&#10;output application/json&#10;---&#10;payload]" doc:name="aggregator" doc:id="b9fe36b1-89fb-4011-8e35-96799b7a0145" />
+		<logger level="INFO" doc:name="infoLogRequest" doc:id="0192aa08-625f-4db8-8979-9c11b61a4faa" message="#[payload]"/>
+	</flow>
+	<flow name="scattergatherdemoFlow1" doc:id="e6911605-01de-4bf0-ad7e-5571b232be98" >
+		<http:listener doc:name="Listener" doc:id="af95d2b8-3ea2-44ef-84b6-739aff773aa9" config-ref="HTTP_Listener_config" path="/scg"/>
+		<set-payload value="#[attributes.queryParams.number as Number + 5  as Number]" doc:name="Set Payload" doc:id="2080261f-7481-4360-923b-21edb9c49f92" />
+		<choice doc:name="Choice" doc:id="00a72e18-9d19-448c-9efb-aa650c1f4f50" >
+			<when expression="#[attributes.queryParams.number &gt; 7 as Number]">
+				<scatter-gather doc:name="Scatter-Gather" doc:id="fa1dfb69-2d22-452c-8cfe-34af0effff50" >
+					<route >
+						<set-payload value="#[payload]" doc:name="Set Payload" doc:id="b59bb1dc-464f-43c7-a294-97f599d76d97" />
+						<logger level="INFO" doc:name="Logger" doc:id="3808ce09-8f30-4511-bd8b-88c2cfe58aae" message="#[payload]"/>
+					</route>
+					<route >
+						<file:write doc:name="Write" doc:id="d651b155-6aec-4186-955a-eeb3f7d696ed" config-ref="File_Config" path="C:\Users\sindhuk\Desktop\Training files\scattergather result" mode="CREATE_NEW"/>
+						<ee:transform doc:name="Transform Message" doc:id="ce05bac3-df1b-42e6-90f7-7373d72eeaf3" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload ++ "file has been created"]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+					</route>
+					<route >
+						<db:insert doc:name="Insert" doc:id="25c4b25e-4c44-4b6c-89e0-e83c7e5ff7fe" config-ref="Database_Config">
+							<db:sql ><![CDATA[insert into production.brands(brand_name) values ('xyz') ]]></db:sql>
+						</db:insert>
+						<ee:transform doc:name="Transform Message" doc:id="4cda058e-27e8-4b2d-9d01-019193cd4feb" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload ++ "Field has created in db"]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+					</route>
+				</scatter-gather>
+			</when>
+			<otherwise>
+				<set-payload value="number is less than 7" doc:name="Set Payload" doc:id="445f11cf-37df-4fff-af14-a46f94758d8a" />
+				<logger level="INFO" doc:name="Logger" doc:id="6aa3f847-5fb6-4597-84d1-a3638c9fea54" message="#[payload]"/>
+			</otherwise>
+		</choice>
+	</flow>
+</mule>

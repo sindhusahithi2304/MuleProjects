@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+	<flow name="assessment3-dompro1Flow" doc:id="62901ce3-96f3-4e3f-817c-c0a1491906f6" >
+		<http:listener doc:name="Listener" doc:id="99bf9d5e-1687-4aca-b58b-9de1ed125a62" config-ref="domainHTTP_Listener_config" path="/project1"/>
+		<db:insert doc:name="Insert" doc:id="a0d8cac2-cd60-41bb-a456-503f091f9a4c" config-ref="domainDatabase_Config">
+			<db:sql><![CDATA[insert into production.brands(brand_name) values ('Hectar')]]></db:sql>
+			<db:input-parameters><![CDATA[#[{
+	Hectar: attributes.queryParams.brandname
+	
+}]]]></db:input-parameters>
+		</db:insert>
+		<logger level="INFO" doc:name="Logger" doc:id="126e6677-c43d-48f9-88a9-ee74556ddab9" message="#[payload]"/>
+	</flow>
+</mule>

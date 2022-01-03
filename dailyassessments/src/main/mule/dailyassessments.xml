@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:wsc="http://www.mulesoft.org/schema/mule/wsc" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/wsc http://www.mulesoft.org/schema/mule/wsc/current/mule-wsc.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="09a9961e-bc5e-4faf-a26f-5af27b766311" >
+		<http:listener-connection host="0.0.0.0" port="8088" />
+	</http:listener-config>
+	<wsc:config name="Web_Service_Consumer_Config" doc:name="Web Service Consumer Config" doc:id="8c074e55-9671-4582-9f54-139260aedaee" >
+		<wsc:connection wsdlLocation="http://calculator-webservice.mybluemix.net/calculator?wsdl" service="CalculatorService" port="CalculatorPort" address="http://calculator-webservice.mybluemix.net/calculator" >
+			<wsc:web-service-security actor="http://schemas.xmlsoap.org/soap/actor/next" />
+		</wsc:connection>
+	</wsc:config>
+	<flow name="date27assement1" doc:id="60fe3c60-a1f0-422b-8749-f5dd1dd250d4" >
+		<http:listener doc:name="Listener" doc:id="af41dc25-3736-4179-b80c-c3e5d7a1bd16" config-ref="HTTP_Listener_config" path="/ass1"/>
+		<ee:transform doc:name="Transform Message" doc:id="d02ffef4-fc9b-41eb-94bb-b40198bdb9c4" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+    "city name": payload.city.name,
+    "Minimum temp": payload.list.main.temp_min reduce ((val, acc) -> acc ++ val) ,
+    "Maximum temp": payload.list.main.temp_max reduce ((val, acc) -> acc ++ val),
+    "Pressure": payload.list.main.pressure reduce ((val, acc) -> acc ++ val),
+    "sea level": payload.list.main.sea_level reduce ((val, acc) -> acc ++ val)
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="fef7ad96-6a89-428f-9f94-e0afa76a43fb" message="#[payload]"/>
+	</flow>
+	<flow name="dailyassessmentsFlow" doc:id="6084b741-5724-41ac-8ab7-6ee47262f18e" >
+		<http:listener doc:name="Listener" doc:id="3e0166b9-aa29-4ce7-bff5-a779eef00404" config-ref="HTTP_Listener_config" path="/ass2"/>
+		<ee:transform doc:name="Transform Message" doc:id="dc1e1323-764f-4a59-ac2c-c220358b6558" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+    cityid: payload.current.city.@id,
+    cityname: payload.current.city.@name,
+    temperature: payload.current.temperature.@value ,
+    temperaturemin : payload.current.temperature.@min -273.15 ++ "celsius",
+    temperaturemin : payload.current.temperature.@max -273.15 ++ "celsius",
+    temperatureunit : payload.current.temperature.@unit,
+
+
+}
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="99f4fd58-9a00-456e-80c4-c6ddb99f4c74" message="#[payload]"/>
+	</flow>
+	<flow name="date28Flow" doc:id="22d9baeb-bfe7-430d-81e8-eb96aa584241" >
+		<http:listener doc:name="Listener" doc:id="20edf283-94cf-4e2f-b0d4-ae6e8ac2d085" config-ref="HTTP_Listener_config" path="/xmlass1"/>
+		<ee:transform doc:name="additionOperation-to-xmlPayload" doc:id="6a3960d6-dbe7-4323-bf51-ee3c52be54c1" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+---
+
+{
+    prices: payload.prices mapObject (value, key) -> {
+        (key): (value + 5) as Number 
+    }
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="infoLogRequest" doc:id="98b7940b-c674-4f1f-9f47-5c5dc9842522" message="#[payload]"/>
+	</flow>
+	<flow name="dailyassessmentsFlow2" doc:id="1c798629-4f1a-4367-9d10-9bcf56a29f58" >
+		<http:listener doc:name="Listener" doc:id="2cea4134-fe4b-4256-bd21-05c731831eea" config-ref="HTTP_Listener_config" path="/mapobj"/>
+		<ee:transform doc:name="transformationUsing MapObject" doc:id="3e19a82b-8807-4e51-92e9-28aa9f1ed362" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload mapObject (value, key, index) -> element:{
+index: index,
+key: key,
+value: value
+
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="infoLogRequest" doc:id="9c88e8d6-b555-4095-aa83-890c05fb9a12" message="#[payload]"/>
+	</flow>
+	<flow name="dailyassessmentsFlow3" doc:id="efd759e6-1cb5-40fe-92b9-540bef1d2d04" >
+		<http:listener doc:name="Listener" doc:id="9eacd52b-8fe0-4ca5-9647-e940bb8ea13c" config-ref="HTTP_Listener_config" path="/groupby"/>
+		<ee:transform doc:name="groupBy" doc:id="13106b3a-135d-478e-896f-6ef9392555a4" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload groupBy $.language]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="infoLogRequest" doc:id="5ed19382-803b-4863-a41a-1f67124f7a9a" message="#[payload]"/>
+	</flow>
+	<flow name="dailyassessmentsFlow1" doc:id="e0e1f1e6-c947-44d9-adcd-e25f243cff08" >
+		<http:listener doc:name="Listener" doc:id="709a96ea-f445-4fd0-8086-c6aaf41b7067" config-ref="HTTP_Listener_config" path="/map"/>
+		<ee:transform doc:name="map" doc:id="a5069a51-5c5a-49fb-8449-8a820bc01829" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[ %dw 2.0
+   output application/json
+   ---
+   payload.myns.bookstore.*book map
+  {
+    title: $["title"],
+    author: $["author"],
+    year: $.year,
+    price:$.price
+  }]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="db495a7b-98a1-4c77-94d4-32be1d243e0a" />
+	</flow>
+	<flow name="dailyassessmentsFlow4" doc:id="f644e49e-83ce-4acb-bb3f-0338cda50eb6" >
+		<http:listener doc:name="Listener" doc:id="bb6364a9-b322-44fd-b42f-c3c28aa8dbad" config-ref="HTTP_Listener_config" path="/map1"/>
+		<ee:transform doc:name="mapConversion-to-Json" doc:id="1b26bbdb-ab7e-4fd1-b347-b154ccd51783" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[
+    %dw 2.0
+output application/json
+---
+payload.myns.bookstore.*book map
+  {
+	title: $["title"],
+	author: $["author"],
+	year: $.year,
+	price: $.price,
+	category: $.@category
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="a77f703c-caa0-4f05-9938-f1e90cd7870d" />
+	</flow>
+	<flow name="dailyassessmentsFlow5" doc:id="2934ded3-831c-4b38-9b8f-182f5f633bc6" >
+		<http:listener doc:name="Listener" doc:id="709afb3e-0205-40ef-832e-5ab96bd98160" config-ref="HTTP_Listener_config" path="/array"/>
+		<ee:transform doc:name="conversion-of-array-to-object" doc:id="884b4bee-1fd1-4190-848f-581c7cdd3a9d" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload map (value,index)->{
+	value: value as Number + 1,
+	index: index
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="infoLogRequest" doc:id="a3ad9b71-7696-4e81-8b69-9202a03e335b" message="#[payload]"/>
+	</flow>
+	<flow name="on-errorcontinueFlow" doc:id="ca5265d4-2f1f-4058-bb5a-7eab9add7f10" >
+		<http:listener doc:name="Listener" doc:id="0d34ad9a-678d-4c11-a960-ec3a6f35e107" config-ref="HTTP_Listener_config" path="/continue">
+			<http:error-response >
+				<http:body ><![CDATA[#[output text/json --- error.description]]]></http:body>
+			</http:error-response>
+		</http:listener>
+		<set-payload value='#["payload after flow reference"]' doc:name="Set Payload" doc:id="3c0807c6-7086-475a-8019-f20eecbcd16d" />
+		<flow-ref doc:name="onerror-continueFlowReference" doc:id="066004a8-3a24-4658-b9e5-95977951ecaa" name="onerror-continue"/>
+		<logger level="INFO" doc:name="infoLogRequest" doc:id="e21df0dc-0d80-4aea-9002-42ccaf7862be" message="#[payload]"/>
+	</flow>
+	<flow name="onerror-continue" doc:id="399ee0e3-33f7-4c6f-9836-cab09f8a9e15" >
+		<http:request method="GET" doc:name="urlConfiguration" doc:id="efd48c72-49d1-4fe9-b6ea-47f4da3a965f" url="abcgddsd.pp"/>
+		<set-payload value='#["after error handling in custom handler"]' doc:name="message-To-Continue-the-Flow" doc:id="3f44cc3a-00b8-4246-893f-08b985b3e2e3" />
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="a3ba48c9-9dcb-4775-af08-14fadb542db1" type="HTTP:CONNECTIVITY">
+				<set-payload value='#["Response has been successfully initiated "]' doc:name="successMessage" doc:id="22df9a17-f774-4db7-88a1-e0baf188fd5f" />
+				<ee:transform doc:name="error.description" doc:id="21f8ae94-0136-482b-8c1f-4d1a4bfe1b4e" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+"message":error.description
+
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-continue>
+		</error-handler>
+	</flow>
+	<flow name="donerrorPropagateFlow" doc:id="2fcdda6f-0bfb-4605-83c2-db4448f946ef" >
+		<http:listener doc:name="Listener" doc:id="8bd2141f-402d-4419-b114-e13c59d0c739" config-ref="HTTP_Listener_config" path="/propogate">
+		</http:listener>
+		<set-payload value='#["payload after flow reference"]' doc:name="flowReferencePayload" doc:id="a0e5fc82-fb9b-4951-8e20-57d08862672a" />
+		<flow-ref doc:name="onerror-propogateFlowReference" doc:id="0b391871-5a5c-4a22-ae67-39d5d6743b3b" name="onerror-propogate" />
+		<logger level="INFO" doc:name="infoLogRequest" doc:id="3b5f8add-bd02-4ba5-8391-8f08c18f0bcb" message="#[payload]"/>
+	</flow>
+	<flow name="onerror-propogate" doc:id="00c03a93-403a-4759-9d52-9be94a5ffaf6" >
+		<http:request method="GET" doc:name="urlConfiguration" doc:id="42467d79-10f9-4499-8c07-95008070fff2" url="abcgddsd.pp"/>
+		<set-payload value='#["after error handling in custom handler"]' doc:name="message-To-Propoagate-the-Flow" doc:id="5926d3e0-d1e0-4614-a959-ad743c38929e" />
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error propogate" doc:id="b18839fc-337d-48d5-805f-1dbeac508c09" type="HTTP:CONNECTIVITY" >
+				<set-payload value='#["Response has not initiated"]' doc:name="errorResonse" doc:id="fe4dfe93-2223-4cda-82d8-28550ecffe88" />
+				<ee:transform doc:name="error.description" doc:id="c63166c2-60bb-4f51-a93c-ebd43c2344a1" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+
+"errorDesc":error.description
+
+
+	
+	
+]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-continue>
+		</error-handler>
+	</flow>
+</mule>

@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="1de6f84e-8660-459e-b1c7-d87b72fba584" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<flow name="helloworldFlow" doc:id="5f420bdf-96fe-4c60-bc65-b5dd01a6c2d8" >
+		<http:listener doc:name="/helloworld" doc:id="83cc5871-4a92-4014-a933-30f180f34996" config-ref="HTTP_Listener_config" path="/helloworld"/>
+		<set-variable value="#[uuid()]" doc:name="CorelationId" doc:id="059bad76-d77e-4433-908a-18b343682dcc" variableName="CorelationId"/>
+		<logger level="INFO" doc:name="display CorelationId" doc:id="56c72804-f3af-4352-8bcc-dfb4a7cbb2b5" message="CorelationId- #[vars.CorelationId]"/>
+		<set-variable value="" doc:name="originalPayload" doc:id="705fd5a5-2ef1-44c7-882f-8ea6d7d9113a" variableName="originalPayload"/>
+		<ee:transform doc:name="payload" doc:id="6835adc7-fe91-4224-bcc5-e010cf09a820" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+---
+root: payload]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="test" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"count": 1
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="displayCorelationIdAndPayload" doc:id="8f41b033-b1f2-48ac-acdd-2718360bd1ff" message="CorelationId-#[vars.originalPayload]-- CorelationId -#[payload]--CorelationId--#[vars.test]" />
+		<set-payload value="HelloWorld" doc:name="HelloWorld" doc:id="c73c6733-106b-456f-94b6-5901e2c78835" />
+		<flow-ref doc:name="helloworldFlow-privateFlow" doc:id="c2c5c427-5f88-4736-8c97-448100c94cad" name="helloworldFlow-privateFlow"/>
+		<flow-ref doc:name="helloworldFlow-subFlow" doc:id="2789fc4b-d637-4e7c-89d1-b956aa763372" name="helloworldFlow-subFlow"/>
+		<logger level="INFO" doc:name="payload" doc:id="5b88f432-5e71-40d3-8c51-08545e1a3096" message="CorelationId- #[vars.CorelationId]"/>
+	</flow>
+	<flow name="helloworldFlow-privateFlow" doc:id="c231c9ce-ed9f-420f-b848-faf6ce85207f" >
+		<logger level="INFO" doc:name="privateFlow" doc:id="46800121-90a1-4dc3-bcfd-79a9af3b78ea" message="CorelationId- #[vars.CorelationId]"/>
+	</flow>
+	<flow name="helloworldFlow-subFlow" doc:id="54d75304-8ebb-4480-bf20-8cf388a4559f" >
+		<logger level="INFO" doc:name="subFlow" doc:id="390ec1bf-cd79-4bf1-b11c-7ea008548c4a" message="CorelationId- #[vars.CorelationId]"/>
+	</flow>
+	<flow name="helloworldFlow1" doc:id="19cc75af-6d78-4377-b588-e7d86831d783" >
+		<http:listener doc:name="Listener" doc:id="a74c0aaa-ad43-43d2-aa08-c8c67e9849b8" config-ref="HTTP_Listener_config" path="/test"/>
+		<ee:transform doc:name="Transform Message" doc:id="761f1ca4-cd77-47c1-a1d7-8973977205fc" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+resultOfAddition: (attributes.queryParams.q1 as Number) + (attributes.queryParams.q2 as Number),
+resultOfMultiplication: (attributes.queryParams.q1 as Number) * (attributes.queryParams.q2 as Number),
+resultOfSubraction:(attributes.queryParams.q1 as Number) - (attributes.queryParams.q2 as Number),
+
+
+}
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="2bfda69f-4017-4923-a6b4-e55c64ae4fb4" message="#[payload]"/>
+	</flow>
+</mule>

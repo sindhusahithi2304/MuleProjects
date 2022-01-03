@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:wsc="http://www.mulesoft.org/schema/mule/wsc" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/wsc http://www.mulesoft.org/schema/mule/wsc/current/mule-wsc.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="b64117e8-c306-445f-903b-871749acb4d1" >
+		<http:listener-connection host="0.0.0.0" port="8083" />
+	</http:listener-config>
+	<wsc:config name="Web_Service_Consumer_Config" doc:name="Web Service Consumer Config" doc:id="dde790c9-7a75-43f7-b9d0-30ec2cdff0e1" >
+		<wsc:connection wsdlLocation="http://www.dneonline.com/calculator.asmx?wsdl" service="Calculator" port="CalculatorSoap" address="http://www.dneonline.com/calculator.asmx" />
+	</wsc:config>
+	<flow name="soapconsumedemoFlow" doc:id="95df3047-42c7-4248-a417-64480ce63d0e" >
+		<http:listener doc:name="Listener" doc:id="9ed3e303-3ab3-4623-937e-ae08b80ee7e5" path="/soapsub" config-ref="HTTP_Listener_config"/>
+		<ee:transform doc:name="passingPayload" doc:id="c67af63c-fdb3-4da3-9465-e238d1eaf107" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+ns ns0 http://soap.training.mulesoft.com/
+ns ns01 http://tempuri.org/
+---
+{
+	ns01#Subtract: {
+		ns01#intA: payload.value1,
+		ns01#intB: payload.value2
+	}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<wsc:consume doc:name="configuringWsdlFile-to-Subract-the-Result" doc:id="9aad03d6-5db2-487c-a489-2eb476337684" config-ref="Web_Service_Consumer_Config" operation="Subtract"/>
+		<ee:transform doc:name="subractingResponse" doc:id="2fd28074-494d-4b43-a27a-bd22d793516e" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+ns ns0 http://tempuri.org/
+---
+{
+	"Result": payload.body.ns0#SubtractResponse
+	
+	}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="infoLogrequest" doc:id="04374103-d6b0-4ffa-91df-8e8c18e5fd4f" message="#[payload]"/>
+	</flow>
+	<flow name="soapconsumedemoFlowAdd" doc:id="ee290642-6f6e-4353-97fc-5b1c0d779622" >
+		<http:listener doc:name="Listener" doc:id="2aaf48ea-e584-4aa5-82aa-a1f68783d086" config-ref="HTTP_Listener_config" path="/soapadd" />
+		<ee:transform doc:name="passingXmlPayload" doc:id="c9222cb3-7054-4433-a9c3-d7087976b26e" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+ns ns0 http://soap.training.mulesoft.com/
+ns ns01 http://tempuri.org/
+---
+{
+	ns01#Add: {
+		ns01#intA: payload.value1,
+		ns01#intB: payload.value2
+	}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<wsc:consume operation="Add" doc:name="configuringWsdlFile-to-Add-the-Result" doc:id="dfbbe1e7-5f19-4a1e-a179-4909bafc45c0" config-ref="Web_Service_Consumer_Config" />
+		<ee:transform doc:name="addResult" doc:id="0bad4b8e-dacc-47b4-ad9f-987b638d3b7a" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+ns ns0 http://tempuri.org/
+---
+{
+	"Result": payload.body.ns0#AddResponse
+	
+	}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="infoLogrequest" doc:id="7c7048d5-fb08-477d-8194-b944277c6f76" message="#[payload]" />
+	</flow>
+	<flow name="soapconsumedemoFlowMultiply" doc:id="28e1557b-467d-46a9-88b8-11dc9e696be3" >
+		<http:listener doc:name="Listener" doc:id="508eb5ca-8b0b-48c6-a9d6-661d07a4d448" config-ref="HTTP_Listener_config" path="/soapmultiply" />
+		<ee:transform doc:name="passingXmlPayload" doc:id="d8810ca8-6abb-499c-ae48-3fef0d104e6c" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+ns ns0 http://soap.training.mulesoft.com/
+ns ns01 http://tempuri.org/
+---
+{
+	ns01#Multiply: {
+        ns01#intA: payload.value1,
+		ns01#intB: payload.value2
+	}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<wsc:consume operation="Multiply" doc:name="configuringWsdlFile-to-Multiply-the-Result" doc:id="69c9a810-c360-4b81-8921-de02040b0b2c" config-ref="Web_Service_Consumer_Config" />
+		<ee:transform doc:name="multiplyResult" doc:id="f6e755b4-3728-4475-8c9e-738057d557c4" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+ns ns0 http://tempuri.org/
+---
+{
+	"Result": payload.body.ns0#MultiplyResponse.ns0#MultiplyResult
+	}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="infoLogrequest" doc:id="afee83f9-7855-4b54-99de-baf7cbab4923" message="#[payload]" />
+	</flow>
+	<flow name="soapconsumedemoFlowDivide" doc:id="aa1e3e9c-5634-4881-b55d-515697162c4d" >
+		<http:listener doc:name="Listener" doc:id="9bf77810-3559-4c8d-a997-d43ee2edc844" config-ref="HTTP_Listener_config" path="/soapdivide" />
+		<ee:transform doc:name="passingXmlPayload" doc:id="4a21f85f-ba34-4b83-a132-d8606b5956b6" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+ns ns0 http://soap.training.mulesoft.com/
+ns ns01 http://tempuri.org/
+---
+{
+	ns01#Divide: {
+        ns01#intA: payload.value1,
+		ns01#intB: payload.value2
+	}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<wsc:consume operation="Divide" doc:name="configuringWsdlFile-to-Divide-the-Result" doc:id="918414e3-289c-4ebe-95fb-23209a3b4df2" config-ref="Web_Service_Consumer_Config" />
+		<ee:transform doc:name="divideResult" doc:id="d2248141-dfd4-4636-aa61-89291defd74f" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+ns ns0 http://tempuri.org/
+---
+{
+	"Result": payload.body.ns0#DivideResponse.ns0#DivideResult
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="infoLogrequest" doc:id="87ef157b-b47e-4ee5-99df-6b6b378fd1ae" message="#[payload]" />
+	</flow>
+</mule>

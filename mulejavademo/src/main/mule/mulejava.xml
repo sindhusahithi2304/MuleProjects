@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:java="http://www.mulesoft.org/schema/mule/java"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/java http://www.mulesoft.org/schema/mule/java/current/mule-java.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="c1fa8883-1669-4cb7-9de3-6d9db609aba3" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<flow name="mulejavaFlow" doc:id="8d297764-adaa-406c-a559-8699fb209054" >
+		<http:listener doc:name="Listener" doc:id="06b9ef03-a5e0-491a-b843-30ab93c52181" path="/java" config-ref="HTTP_Listener_config"/>
+		<java:invoke-static doc:name="Invoke static" doc:id="2a39b63c-01d8-4806-bf0d-ebee3c6786f6" class="mulejavademo.mulejavademo" method="getWelcomeMessage()"/>
+		<logger level="INFO" doc:name="Logger" doc:id="882f1399-1c2d-4723-89a4-2000203c0b0a" message="#[payload]"/>
+	</flow>
+	<flow name="mulejavaFlow1" doc:id="7f6e999e-6886-42bd-9362-4013d60fcbd7" >
+		<http:listener doc:name="Listener" doc:id="8985de73-1f5b-46c0-b100-06334177a69f" config-ref="HTTP_Listener_config" path="/dwjava"/>
+		<ee:transform doc:name="Transform Message" doc:id="6197e204-a4a4-45ae-83b2-18e058210bb0" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+import java!mulejavademo::mulejavademo
+---
+{
+	result: mulejavademo::getWelcomeMessage(),
+	Name: "Sahithi",
+	Address: "Hyderabad"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="cd353ad9-0df9-4bbd-871e-938793b9734b" message="#[payload]"/>
+	</flow>
+	<flow name="mulejavaFlow2" doc:id="fa1014f9-3e20-4099-be50-31aeaed53476" >
+		<http:listener doc:name="Listener" doc:id="d17c1f5d-6ce5-4819-bca6-48ae80d24660" config-ref="HTTP_Listener_config" path="/static"/>
+		<java:new doc:name="New" doc:id="239fdb34-eb73-4d79-9ded-2086f204fe3f" class="mulejavademo.sample" constructor="sample()" target="objOfSampleClass"/>
+		<java:invoke doc:name="Invoke" doc:id="20ab4e8c-85ae-40c0-b7c0-1fa930018674" instance="#[vars.objOfSampleClass]" class="mulejavademo.sample" method="getBalance(java.lang.String)">
+			<java:args ><![CDATA[#[{
+	arg0:attributes.queryParams.bankName
+}]]]></java:args>
+		</java:invoke>
+	</flow>
+	<flow name="mulejavaFlow3" doc:id="b6a0cd3d-8330-4adb-bead-c6569c61d008" >
+		<http:listener doc:name="Listener" doc:id="64bd467b-ef50-41d1-af4e-c7a0342df5b0" config-ref="HTTP_Listener_config" path="/nonstat"/>
+		<java:invoke-static doc:name="Invoke static" doc:id="508870eb-b1ae-4708-b2c4-5c7c73d7ee4b" class="mulejavademo.sample" method="welcome(java.lang.String)">
+			<java:args ><![CDATA[#[{
+	arg0: attributes.queryParams.name
+}]]]></java:args>
+		</java:invoke-static>
+	</flow>
+</mule>

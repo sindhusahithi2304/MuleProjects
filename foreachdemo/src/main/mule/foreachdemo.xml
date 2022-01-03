@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:batch="http://www.mulesoft.org/schema/mule/batch" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="91b47738-9d33-4979-afd6-e3102c3af3a5" >
+		<http:listener-connection host="0.0.0.0" port="8085" />
+	</http:listener-config>
+	<flow name="foreachdemoFlow" doc:id="bc4ea242-0005-4b85-9324-4363e11864ce" >
+		<http:listener doc:name="Listener" doc:id="5d2b447d-bb3b-4b2f-8104-1653e0d599bf" config-ref="HTTP_Listener_config" path="/foreach"/>
+		<set-payload value='#[[1,2,"s",4,5]]' doc:name="array-of-Values" doc:id="c4ce77ea-13b5-4d4b-93a9-956e274d6677" />
+		<foreach doc:name="For Each" doc:id="05cd3413-97be-4f35-9752-50ebfa7d7fa3">
+			<set-payload value="#[payload  as Number]" doc:name="iteratingPayload" doc:id="9c52c654-263b-44e5-8327-5d4b55a95415" />
+		</foreach>
+		<ee:transform doc:name="converting-to-JsonFormat" doc:id="135513fe-e695-45b1-af6f-63c91d25c90c" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="infoLogRequest" doc:id="11313703-045a-499f-858d-17492834a304" message="#[payload]"/>
+	</flow>
+	<flow name="batchprocessingDemo" doc:id="19bd682f-2936-4a49-ad95-5386738f97e1" >
+		<http:listener doc:name="/batch" doc:id="d05aa36e-9bb9-4f39-bd52-35725f0e56fb" config-ref="HTTP_Listener_config" path="/batch"/>
+		<set-payload value='#[[1,2,3,4,5,"a","b","c",6,7,8]]' doc:name="array-of-Values" doc:id="5a34a944-6c02-4ecd-988b-641c9e8c0fdc" />
+		<batch:job jobName="foreachdemoBatch_Job" doc:id="6780110a-c653-4e83-990d-99a1b2e2d226" maxFailedRecords="10">
+			<batch:process-records >
+				<batch:step name="successRecords" doc:id="297e1ffb-efe0-44f4-875b-eaf4b7b10d4e" acceptExpression="#[payload as Number]">
+					<set-payload value="#[payload * 10]" doc:name="payload * 10" doc:id="53280ace-f56b-44b3-b398-3e91785b9141" />
+					<batch:aggregator doc:name="Batch Aggregator" doc:id="dc2d5e85-698b-4d87-90a8-579ce59688d6" streaming="true">
+						<logger level="INFO" doc:name="displaySuccessRecords" doc:id="3342aca0-016b-4d1f-a2e3-3def271773ca" message="#[payload]"/>
+					</batch:aggregator>
+				</batch:step>
+				<batch:step name="failureRecords" doc:id="64250b51-7316-4e72-ab15-fec58ebe727e" acceptExpression="#[payload as String]">
+					<set-payload doc:name="incomingFailedRecords" doc:id="c9c71959-603f-4cbc-b80c-71b718f6a640" value="#[payload]"/>
+					<batch:aggregator doc:name="Batch Aggregator" doc:id="4a5a4990-6a09-4fc3-9ad0-b94c664de98d" streaming="true">
+						<logger level="INFO" doc:name="displayFailedRecords" doc:id="fe06dc45-8748-4803-bb9f-bb7b35805188" message="#[payload]"/>
+					</batch:aggregator>
+				</batch:step>
+			</batch:process-records>
+			<batch:on-complete >
+				<ee:transform doc:name="converting-to-jsonFormat" doc:id="e53d877c-7a83-4316-bd92-32d25a45a0ba">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<logger level="INFO" doc:name="displayStatistics-of-Records" doc:id="c112d36b-2e13-4d0f-9f32-0240a6c5a8b9" message="#[payload]"/>
+			</batch:on-complete>
+		</batch:job>
+	</flow>
+</mule>

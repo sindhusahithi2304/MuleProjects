@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="4f654b18-b897-4134-8d75-2588c3307462" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<file:config name="File_Config" doc:name="File Config" doc:id="8b9997a5-ce3b-4cd8-a2e2-40866ed4dc5d" >
+		<file:connection workingDir="D:\input" />
+	</file:config>
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="4d143a63-982c-45e4-95b9-cc384cfa7399" >
+		<db:mssql-connection host="muletraining.database.windows.net" port="1433" user="user" password="muletraining@123" databaseName="BikeStores" />
+	</db:config>
+	<flow name="scatterlabFlow" doc:id="abcccb7e-1386-4411-af64-19b53162cd52" >
+		<http:listener doc:name="Listener" doc:id="99fc1517-132e-4d3b-8de6-4882a764ee7f" config-ref="HTTP_Listener_config" path="/scatter"/>
+		<set-payload value="#[attributes.queryParams.number as Number + 5 as Number]" doc:name="Set Payload" doc:id="74d0be9f-3812-450e-b375-c267aecf7ef5" />
+		<choice doc:name="Choice" doc:id="6c452af2-ef8d-43b1-8c90-48bceeae849c" >
+			<when expression="#[attributes.queryParams.number &gt; 7 as Number]">
+				<scatter-gather doc:name="Scatter-Gather" doc:id="4bf41e4a-999d-47ba-8ae4-c339e3dfebdb" >
+					<route >
+						<set-payload value="#[payload]" doc:name="Set Payload" doc:id="fc23ff63-6004-40c8-bf09-0dd7bc3d4219" />
+					</route>
+					<route >
+						<file:write doc:name="Write" doc:id="3ec32fd2-b52e-43a1-ab4e-567d74a63f68" config-ref="File_Config" path="filecontext.json"/>
+						<set-payload value='#[%dw 2.0&#10;output application/json&#10;---&#10;payload ++ " " ++ "file has been updated"]' doc:name="Set Payload" doc:id="4a399ee2-2218-488d-bbdb-17ae82ee5095" />
+					</route>
+					<route >
+						<db:insert doc:name="Insert" doc:id="a68f0d64-6b07-4b57-a3e8-d62dcc10d602" config-ref="Database_Config">
+							<db:sql ><![CDATA[insert into production.categories (category_name) values ('ravichandra')]]></db:sql>
+						</db:insert>
+						<ee:transform doc:name="Transform Message" doc:id="5b2c2d10-7dfb-449e-81e1-2a85298f12c1" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+					</route>
+				</scatter-gather>
+				<set-payload value="#[%dw 2.0&#10;output application/json&#10;---&#10;payload]" doc:name="Set Payload" doc:id="92fb7fb7-9731-4836-9148-b99a95ac6a89" />
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="Logger" doc:id="b0b5e069-5619-4ecd-b2f3-a4d4a35b04f1" message="default logger "/>
+			</otherwise>
+		</choice>
+	</flow>
+</mule>

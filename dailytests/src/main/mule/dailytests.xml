@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="dd8b2311-61ba-47c8-9c7a-c2e7bb015641" >
+		<http:listener-connection host="0.0.0.0" port="8084" />
+	</http:listener-config>
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="9f197a58-54c0-4d75-b733-d654af0e2825" >
+		<http:request-connection host="localhost" />
+	</http:request-config>
+	<flow name="dailytestsFlow" doc:id="5bf597d2-a187-4c0c-b805-b6dadaf2abe6" >
+		<http:listener doc:name="Listener" doc:id="5cd1033b-aacc-4852-bd97-8c64de8d76b8" config-ref="HTTP_Listener_config" path="/users"/>
+		<set-variable value="" doc:name="corelationId" doc:id="a9e20675-acb7-477c-bffe-9e9958d490a5" variableName="corelationId"/>
+		<logger level="INFO" doc:name="displayCorelationId" doc:id="4f27e02f-63dd-4d7f-947f-59773d7923e3" message="corelationId-#[vars.corelationId]"/>
+		<http:request method="GET" doc:name="loginDetailsConfiguration" doc:id="671095e9-aa24-487d-9bcc-2615214bdb0b" config-ref="HTTP_Request_configuration" url="https://api.github.com/users"/>
+		<ee:transform doc:name="getLoginnameAndId" doc:id="5ec8967b-baa7-4b6c-b4de-e4e169f4dfb6" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload map ((item, index) -> 
+{
+    "Login name": item.login,
+    "id": item.id
+   
+})]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="infoLogRequest" doc:id="ca928813-f227-47f8-b68b-25d31ded453f" message="#[payload]"/>
+	</flow>
+</mule>

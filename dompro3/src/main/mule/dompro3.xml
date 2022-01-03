@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+	<flow name="dompro3Flow" doc:id="97cb6c5e-d4e5-41d8-b503-73c687bdfc9e" >
+		<http:listener doc:name="Listener" doc:id="66c3f2c7-06da-4061-a5e8-be0575aacab4" config-ref="HTTP_Listener_config" path="/pro3"/>
+		<db:insert doc:name="Insert" doc:id="3ba3bdb4-f563-4362-8d09-caf9b2ffd30a" config-ref="Database_Config">
+			<db:sql ><![CDATA[insert into production.brands(brand_name) values ('Abc')]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	Abc: attributes.queryParams.brandname
+	
+}]]]></db:input-parameters>
+		</db:insert>
+	</flow>
+</mule>

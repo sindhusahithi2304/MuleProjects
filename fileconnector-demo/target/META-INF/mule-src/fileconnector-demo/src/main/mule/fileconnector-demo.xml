@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="1879751f-37d5-495c-9b62-795ec2641bc1" >
+		<http:listener-connection host="0.0.0.0" port="8083" />
+	</http:listener-config>
+	<file:config name="readFile" doc:name="File Config" doc:id="48b44a69-5903-4d91-bd23-d0d3f0523c29" >
+		<file:connection workingDir="C:\Users\sindhuk\Documents\readFiles" />
+	</file:config>
+	<file:config name="File_Config" doc:name="File Config" doc:id="80fa483a-3571-4e83-bcae-3af0c707b333" >
+		<file:connection workingDir="C:\Users\sindhuk\Documents\readFiles" />
+	</file:config>
+	<flow name="fileconnector-demoFlow" doc:id="103ec103-94d7-4636-9a78-73150f59cb64" >
+		<http:listener doc:name="Listener" doc:id="db2982ec-dd98-43b6-91f6-226a6ddf9ab2" config-ref="HTTP_Listener_config" path="/read"/>
+		<set-variable value="#[uuid()]" doc:name="Set Variable" doc:id="f5b21adb-7ed9-4eb5-9bad-59d7da0fe2fc" variableName="corelationId"/>
+		<file:read doc:name="readFile" doc:id="5a1d1f3e-2373-4610-a437-50ac72540072" config-ref="readFile" path="readingFile.txt" target="readFile"/>
+		<logger level="INFO" doc:name="readLogger" doc:id="0bcc2709-53a8-4d7a-aeb6-dee7e03901d4" message="#[payload]" />
+		<choice doc:name="Choice" doc:id="afab5b8d-8cbe-4f70-a727-680bae243cbd" >
+			<when expression="#[isEmpty(payload)]">
+				<file:write doc:name="writeFile-To -newFolder" doc:id="c7c62082-ac5d-483d-b969-5d997bbe0d50" config-ref="File_Config" path="writeFile.txt" mode="APPEND">
+					<file:content ><![CDATA[#["\n Adding new lines in empty file"]]]></file:content>
+				</file:write>
+				<logger level="INFO" doc:name="" doc:id="eb1953c6-3a54-4846-9f4b-82d40d4c31db" message="corelationId- #[vars.corelationId]--write logger" />
+				<set-payload value="write operation has successfully executed" doc:name="successResponse" doc:id="49a788ec-8108-4b26-94d5-802cf8dc6242" />
+			</when>
+			<otherwise >
+				<ee:transform doc:name="targetVarDeclaration" doc:id="0e804a0a-c19e-40fb-9136-f9f85a31dae5">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"Name": "SindhuSahithi",
+	"FileOutput": vars.readFile ++ " " ++ "appending new lines"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+				<file:write doc:name="Write" doc:id="eeed794f-76ff-4720-8eb6-b26a256170be" config-ref="File_Config" mode="CREATE_NEW" path="default.txt"/>
+				<set-payload value="file has been written successfully" doc:name="Set Payload" doc:id="6d955e22-4ae3-4b67-b894-0be45c8d5b99" />
+				<logger level="INFO" doc:name="Logger" doc:id="59e32e9a-81a4-48d0-ac33-2e82e57d2788" message="#[payload]"/>
+			</otherwise>
+		</choice>
+		<logger level="INFO" doc:name="writeLogger" doc:id="fb27de7b-841a-4be1-9688-facb48c2b4e7" message="#[payload]"/>
+	</flow>
+</mule>
